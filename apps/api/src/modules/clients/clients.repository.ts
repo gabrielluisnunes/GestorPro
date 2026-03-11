@@ -1,31 +1,41 @@
 import { Injectable } from "@nestjs/common";
-import { CreateClientDto } from "./dto/create-client.dto";
-import { UpdateClientDto } from "./dto/update-client.dto";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { ClientEntity } from "../../database/entities/client.entity";
 
 @Injectable()
 export class ClientsRepository {
-  create(dto: CreateClientDto) {
-    // TODO: insert into database
-    throw new Error("Not implemented");
+  constructor(
+    @InjectRepository(ClientEntity)
+    private readonly repo: Repository<ClientEntity>,
+  ) {}
+
+  findAllByUser(userId: string): Promise<ClientEntity[]> {
+    return this.repo.find({
+      where: { user_id: userId },
+      order: { name: "ASC" },
+    });
   }
 
-  findAll() {
-    // TODO: query all clients for authenticated user
-    throw new Error("Not implemented");
+  findOneByUser(id: string, userId: string): Promise<ClientEntity | null> {
+    return this.repo.findOne({ where: { id, user_id: userId } });
   }
 
-  findOne(id: string) {
-    // TODO: query client by id
-    throw new Error("Not implemented");
+  create(data: Partial<ClientEntity>): Promise<ClientEntity> {
+    const client = this.repo.create(data);
+    return this.repo.save(client);
   }
 
-  update(id: string, dto: UpdateClientDto) {
-    // TODO: update client record
-    throw new Error("Not implemented");
+  async update(
+    id: string,
+    userId: string,
+    data: Partial<ClientEntity>,
+  ): Promise<ClientEntity | null> {
+    await this.repo.update({ id, user_id: userId }, data);
+    return this.findOneByUser(id, userId);
   }
 
-  remove(id: string) {
-    // TODO: delete client record
-    throw new Error("Not implemented");
+  async remove(id: string, userId: string): Promise<void> {
+    await this.repo.delete({ id, user_id: userId });
   }
 }

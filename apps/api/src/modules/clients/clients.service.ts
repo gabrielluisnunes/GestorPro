@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { ClientsRepository } from "./clients.repository";
 import { CreateClientDto } from "./dto/create-client.dto";
 import { UpdateClientDto } from "./dto/update-client.dto";
@@ -7,23 +7,27 @@ import { UpdateClientDto } from "./dto/update-client.dto";
 export class ClientsService {
   constructor(private readonly clientsRepository: ClientsRepository) {}
 
-  create(dto: CreateClientDto) {
-    return this.clientsRepository.create(dto);
+  findAll(userId: string) {
+    return this.clientsRepository.findAllByUser(userId);
   }
 
-  findAll() {
-    return this.clientsRepository.findAll();
+  async findOne(id: string, userId: string) {
+    const client = await this.clientsRepository.findOneByUser(id, userId);
+    if (!client) throw new NotFoundException("Cliente não encontrado");
+    return client;
   }
 
-  findOne(id: string) {
-    return this.clientsRepository.findOne(id);
+  create(dto: CreateClientDto, userId: string) {
+    return this.clientsRepository.create({ ...dto, user_id: userId });
   }
 
-  update(id: string, dto: UpdateClientDto) {
-    return this.clientsRepository.update(id, dto);
+  async update(id: string, dto: UpdateClientDto, userId: string) {
+    await this.findOne(id, userId);
+    return this.clientsRepository.update(id, userId, dto);
   }
 
-  remove(id: string) {
-    return this.clientsRepository.remove(id);
+  async remove(id: string, userId: string) {
+    await this.findOne(id, userId);
+    return this.clientsRepository.remove(id, userId);
   }
 }
