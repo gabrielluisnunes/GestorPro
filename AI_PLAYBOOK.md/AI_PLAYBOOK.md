@@ -47,25 +47,25 @@ Controller → Service → Repository → Database
 
 # Frontend Architecture Playbook
 
-This document defines the frontend architecture standards for the project.
+This document defines the architecture rules for the frontend codebase.
 
-The goal is to ensure that the frontend codebase remains scalable, modular, and maintainable as the application grows.
+The goal is to keep the frontend scalable, modular, and maintainable as the application grows.
 
-Frontend code must never become monolithic.
+All features must follow **feature-based architecture** and strict separation of responsibilities.
 
 ---
 
 # Core Principles
 
-Frontend development must follow these principles:
+Frontend code must follow these principles:
 
-* separation of responsibilities
-* feature-based architecture
-* reusable components
-* clear folder structure
-* maintainable code
+* feature-based organization
+* small and reusable components
+* separation of UI, logic, and API
+* modular structure
+* predictable data flow
 
-Avoid large files containing UI, logic, API calls, and state all together.
+Avoid monolithic files containing UI, logic, API calls, and state together.
 
 ---
 
@@ -73,11 +73,9 @@ Avoid large files containing UI, logic, API calls, and state all together.
 
 All business features must be grouped inside a **features** directory.
 
-Each feature represents a domain area of the product.
-
 Example:
 
-```id="feat-tree"
+```text
 src
 ├── features
 │   ├── transactions
@@ -86,15 +84,15 @@ src
 │   └── users
 ```
 
-Each feature is self-contained.
+Each feature represents a domain of the application.
 
 ---
 
-# Feature Structure
+# Feature Folder Structure
 
 Each feature must follow this structure:
 
-```id="feature-structure"
+```text
 features
 └── transactions
     ├── components
@@ -103,7 +101,10 @@ features
     │   └── transaction-list.tsx
     │
     ├── hooks
-    │   └── use-transactions.ts
+    │   ├── use-transactions.ts
+    │   ├── use-create-transaction.ts
+    │   ├── use-update-transaction.ts
+    │   └── use-delete-transaction.ts
     │
     ├── services
     │   └── transactions-api.ts
@@ -116,22 +117,118 @@ features
 
 ---
 
-# Responsibilities
+# Responsibility Separation
+
+Each layer must have a clear responsibility.
 
 transaction-page
-Responsible only for orchestrating the screen.
+Responsible only for assembling the screen.
 
 components
-Reusable UI pieces.
+Reusable UI components.
 
 hooks
-State management and client-side logic.
+State management and feature logic.
 
 services
 API communication.
 
 types
-Type definitions and contracts.
+Data contracts and interfaces.
+
+---
+
+# Data Flow Architecture
+
+Frontend must follow this data flow:
+
+```text
+Component → Hook → Service → API
+```
+
+Example:
+
+```text
+TransactionPage
+  → useTransactions()
+     → transactionsService.getTransactions()
+        → Backend API
+```
+
+Components must never call APIs directly.
+
+---
+
+# Hook Rule (Important)
+
+Each **data operation should have its own hook**.
+
+Example:
+
+```text
+useTransactions
+useCreateTransaction
+useUpdateTransaction
+useDeleteTransaction
+```
+
+Hooks encapsulate the logic for interacting with backend endpoints.
+
+Rule:
+
+> **1 important data operation = 1 hook**
+
+This makes logic reusable and keeps components clean.
+
+---
+
+# Services Layer
+
+Services are responsible for API communication.
+
+Location:
+
+```text
+features/{feature}/services
+```
+
+Example:
+
+```text
+transactions-api.ts
+```
+
+Example implementation:
+
+```ts
+export async function getTransactions() {
+  return fetch("/api/transactions").then(res => res.json())
+}
+```
+
+Services must not contain UI logic.
+
+---
+
+# Hooks Layer
+
+Hooks contain feature logic and state management.
+
+Example:
+
+```ts
+export function useTransactions() {
+  const [transactions, setTransactions] = useState([])
+
+  useEffect(() => {
+    getTransactions().then(setTransactions)
+  }, [])
+
+  return { transactions }
+}
+```
+
+Hooks may call services but must never contain UI.
 
 ---
 
@@ -141,18 +238,18 @@ Components must follow the **single responsibility principle**.
 
 Bad example:
 
-```id="bad-example"
+```text
 TransactionPage.tsx
  ├ UI
  ├ API calls
- ├ business logic
+ ├ state logic
  ├ validation
  └ layout
 ```
 
 Correct example:
 
-```id="good-example"
+```text
 TransactionPage
  ├ TransactionList
  ├ TransactionCard
@@ -162,17 +259,17 @@ TransactionPage
 
 ---
 
-# UI Layer
+# Shared UI Components
 
-Shared UI components must live in:
+Reusable UI components must live in:
 
-```id="ui-folder"
+```text
 src/components/ui
 ```
 
 Examples:
 
-```id="ui-examples"
+```text
 Button
 Input
 Modal
@@ -180,7 +277,7 @@ Dropdown
 Table
 ```
 
-These components must not contain business logic.
+These components must remain purely visual.
 
 ---
 
@@ -188,119 +285,37 @@ These components must not contain business logic.
 
 Layout components must live in:
 
-```id="layout-folder"
+```text
 src/components/layout
 ```
 
 Examples:
 
-```id="layout-examples"
+```text
 Navbar
 Sidebar
-PageLayout
 DashboardLayout
+PageLayout
 ```
 
 ---
 
-# Hooks Layer
+# File Size Rule
 
-Hooks manage state and business logic on the frontend.
+Files larger than ~200 lines must be refactored.
 
-Location:
-
-```id="hooks-folder"
-features/{feature}/hooks
-```
-
-Example:
-
-```id="hook-example"
-useTransactions.ts
-useAuth.ts
-```
-
-Hooks may call services but must never access the database directly.
-
----
-
-# Services Layer
-
-Services handle communication with the backend.
-
-Location:
-
-```id="services-folder"
-features/{feature}/services
-```
-
-Example:
-
-```id="service-example"
-transactions-api.ts
-auth-api.ts
-```
-
-Services should:
-
-* handle API requests
-* handle response mapping
-* avoid UI logic
-
----
-
-# Types Layer
-
-Types must be centralized for each feature.
-
-Example:
-
-```id="types-example"
-Transaction
-TransactionStatus
-CreateTransactionInput
-```
-
-Types ensure frontend and backend contracts remain consistent.
-
----
-
-# Avoid Large Files
-
-Files larger than ~200 lines should be refactored.
-
-Break them into:
+Split them into:
 
 * smaller components
 * hooks
+* services
 * utilities
 
 ---
 
-# Data Flow
+# Example Folder Tree
 
-Frontend must follow this flow:
-
-```id="frontend-flow"
-Component → Hook → Service → API
-```
-
-Example:
-
-```id="flow-example"
-TransactionPage
- → useTransactions()
-   → transactionsService.getTransactions()
-     → Backend API
-```
-
-Never call APIs directly inside components.
-
----
-
-# Folder Example (Complete)
-
-```id="full-frontend-tree"
+```text
 src
 │
 ├── features
@@ -326,38 +341,21 @@ src
 
 ---
 
-# Scalability Goals
-
-This architecture allows:
-
-* large teams to collaborate
-* features to evolve independently
-* components to be reused
-* logic to stay organized
-
-It prevents the frontend from turning into a monolithic codebase.
-
----
-
 # Implementation Rule
 
 When implementing a new feature:
 
 1. create the feature folder
 2. define types
-3. create services
-4. create hooks
+3. create API services
+4. create hooks for operations
 5. create UI components
 6. assemble the page
 
-Only after this structure exists should the feature be implemented.
+Never start coding directly inside a large page file.
 
-This ensures long-term maintainability of the codebase.
+Always respect the architecture.
 
-
-UI components must never contain business logic.
-
----
 
 # Backend Architecture Rules
 
