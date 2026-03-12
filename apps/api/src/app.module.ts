@@ -42,18 +42,3 @@ import { UsersModule } from "./modules/users/users.module";
   ],
 })
 export class AppModule {}
-
-@Module({
-  imports: [
-    AuthModule,
-    UsersModule,
-    ClientsModule,
-    ServicesModule,
-    ContractsModule,
-    PaymentsModule,
-    DocumentsModule,
-    EventsModule,
-    DashboardModule,
-  ],
-})
-export class AppModule {}
