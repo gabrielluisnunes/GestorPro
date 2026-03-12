@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { AxiosError } from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -35,9 +36,8 @@ export function LoginPage() {
     });
   }
 
-  const apiError = (error as any)?.response?.data?.message as
-    | string
-    | undefined;
+  const apiError = (error as AxiosError<{ message: string }>)?.response?.data
+    ?.message;
 
   return (
     <div className="min-h-screen bg-primary-50 flex flex-col items-center justify-center relative overflow-hidden px-4 py-12">
