@@ -1,12 +1,7 @@
 import { IsDateString, IsEnum, IsOptional, IsString } from "class-validator";
+import { EventType } from "../../../database/entities/event.entity";
 
-export enum EventType {
-  MEETING = "reunião",
-  DEADLINE = "prazo",
-  HEARING = "audiência",
-  SESSION = "sessão",
-  TASK = "tarefa",
-}
+export { EventType };
 
 export class CreateEventDto {
   @IsString()
