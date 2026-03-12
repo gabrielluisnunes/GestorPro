@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 
 interface PasswordFieldProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -58,38 +58,36 @@ const LockIcon = () => (
   </svg>
 );
 
-export function PasswordField({
-  label,
-  error,
-  extra,
-  ...inputProps
-}: PasswordFieldProps) {
-  const [show, setShow] = useState(false);
+export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
+  function PasswordField({ label, error, extra, ...inputProps }, ref) {
+    const [show, setShow] = useState(false);
 
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-1.5">
-        <label className="text-sm font-medium text-gray-700">{label}</label>
-        {extra}
-      </div>
-      <div className="relative">
-        <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-          <LockIcon />
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-1.5">
+          <label className="text-sm font-medium text-gray-700">{label}</label>
+          {extra}
         </div>
-        <input
-          {...inputProps}
-          type={show ? "text" : "password"}
-          className="w-full border border-gray-200 rounded-lg pl-9 pr-10 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
-        />
-        <button
-          type="button"
-          onClick={() => setShow((v) => !v)}
-          className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-        >
-          {show ? <EyeOffIcon /> : <EyeIcon />}
-        </button>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+            <LockIcon />
+          </div>
+          <input
+            ref={ref}
+            {...inputProps}
+            type={show ? "text" : "password"}
+            className="w-full border border-gray-200 rounded-lg pl-9 pr-10 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors"
+          />
+          <button
+            type="button"
+            onClick={() => setShow((v) => !v)}
+            className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            {show ? <EyeOffIcon /> : <EyeIcon />}
+          </button>
+        </div>
+        {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
       </div>
-      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-    </div>
-  );
-}
+    );
+  },
+);
