@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deletePayment } from "../services/payments-api";
+import { deletePayment } from "../services/payments.service";
 
 export function useDeletePayment() {
   const queryClient = useQueryClient();
