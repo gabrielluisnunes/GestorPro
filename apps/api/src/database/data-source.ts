@@ -1,8 +1,9 @@
 import * as dotenv from "dotenv";
+import * as path from "path";
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../../../.env") });
 
 export const AppDataSource = new DataSource({
   type: "mariadb",
