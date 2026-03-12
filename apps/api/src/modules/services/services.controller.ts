@@ -3,14 +3,21 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
+  UseGuards,
 } from "@nestjs/common";
+import { UserEntity } from "../../database/entities/user.entity";
+import { CurrentUser } from "../auth/current-user.decorator";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { CreateServiceDto } from "./dto/create-service.dto";
 import { UpdateServiceDto } from "./dto/update-service.dto";
 import { ServicesService } from "./services.service";
 
+@UseGuards(JwtAuthGuard)
 @Controller("services")
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}
@@ -21,22 +28,27 @@ export class ServicesController {
   }
 
   @Get()
-  findAll() {
-    return this.servicesService.findAll();
+  findAll(@CurrentUser() user: UserEntity) {
+    return this.servicesService.findAll(user.id);
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.servicesService.findOne(id);
+  findOne(@Param("id") id: string, @CurrentUser() user: UserEntity) {
+    return this.servicesService.findOne(id, user.id);
   }
 
   @Patch(":id")
-  update(@Param("id") id: string, @Body() dto: UpdateServiceDto) {
-    return this.servicesService.update(id, dto);
+  update(
+    @Param("id") id: string,
+    @Body() dto: UpdateServiceDto,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return this.servicesService.update(id, dto, user.id);
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.servicesService.remove(id);
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(@Param("id") id: string, @CurrentUser() user: UserEntity) {
+    return this.servicesService.remove(id, user.id);
   }
 }

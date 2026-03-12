@@ -1,22 +1,41 @@
 import { Injectable } from "@nestjs/common";
-import { CreateEventDto } from "./dto/create-event.dto";
-import { UpdateEventDto } from "./dto/update-event.dto";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { EventEntity } from "../../database/entities/event.entity";
 
 @Injectable()
 export class EventsRepository {
-  create(dto: CreateEventDto) {
-    throw new Error("Not implemented");
+  constructor(
+    @InjectRepository(EventEntity)
+    private readonly repo: Repository<EventEntity>,
+  ) {}
+
+  findAllByUser(userId: string): Promise<EventEntity[]> {
+    return this.repo.find({
+      where: { user_id: userId },
+      order: { date: "ASC" },
+    });
   }
-  findAll() {
-    throw new Error("Not implemented");
+
+  findOneByUser(id: string, userId: string): Promise<EventEntity | null> {
+    return this.repo.findOne({ where: { id, user_id: userId } });
   }
-  findOne(id: string) {
-    throw new Error("Not implemented");
+
+  create(data: Partial<EventEntity>): Promise<EventEntity> {
+    const entity = this.repo.create(data);
+    return this.repo.save(entity);
   }
-  update(id: string, dto: UpdateEventDto) {
-    throw new Error("Not implemented");
+
+  async update(
+    id: string,
+    userId: string,
+    data: Partial<EventEntity>,
+  ): Promise<EventEntity | null> {
+    await this.repo.update({ id, user_id: userId }, data);
+    return this.findOneByUser(id, userId);
   }
-  remove(id: string) {
-    throw new Error("Not implemented");
+
+  async remove(id: string, userId: string): Promise<void> {
+    await this.repo.delete({ id, user_id: userId });
   }
 }

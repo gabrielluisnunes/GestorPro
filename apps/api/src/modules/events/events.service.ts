@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { CreateEventDto } from "./dto/create-event.dto";
 import { UpdateEventDto } from "./dto/update-event.dto";
 import { EventsRepository } from "./events.repository";
@@ -7,19 +7,27 @@ import { EventsRepository } from "./events.repository";
 export class EventsService {
   constructor(private readonly eventsRepository: EventsRepository) {}
 
-  create(dto: CreateEventDto) {
-    return this.eventsRepository.create(dto);
+  findAll(userId: string) {
+    return this.eventsRepository.findAllByUser(userId);
   }
-  findAll() {
-    return this.eventsRepository.findAll();
+
+  async findOne(id: string, userId: string) {
+    const event = await this.eventsRepository.findOneByUser(id, userId);
+    if (!event) throw new NotFoundException("Evento não encontrado");
+    return event;
   }
-  findOne(id: string) {
-    return this.eventsRepository.findOne(id);
+
+  create(dto: CreateEventDto, userId: string) {
+    return this.eventsRepository.create({ ...dto, user_id: userId });
   }
-  update(id: string, dto: UpdateEventDto) {
-    return this.eventsRepository.update(id, dto);
+
+  async update(id: string, dto: UpdateEventDto, userId: string) {
+    await this.findOne(id, userId);
+    return this.eventsRepository.update(id, userId, dto);
   }
-  remove(id: string) {
-    return this.eventsRepository.remove(id);
+
+  async remove(id: string, userId: string) {
+    await this.findOne(id, userId);
+    return this.eventsRepository.remove(id, userId);
   }
 }

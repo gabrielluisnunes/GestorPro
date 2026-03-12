@@ -1,22 +1,47 @@
 import { Injectable } from "@nestjs/common";
-import { CreateContractDto } from "./dto/create-contract.dto";
-import { UpdateContractDto } from "./dto/update-contract.dto";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { ContractEntity } from "../../database/entities/contract.entity";
 
 @Injectable()
 export class ContractsRepository {
-  create(dto: CreateContractDto) {
-    throw new Error("Not implemented");
+  constructor(
+    @InjectRepository(ContractEntity)
+    private readonly repo: Repository<ContractEntity>,
+  ) {}
+
+  findAllByUser(userId: string): Promise<ContractEntity[]> {
+    return this.repo
+      .createQueryBuilder("contract")
+      .innerJoin("contract.client", "client")
+      .where("client.user_id = :userId", { userId })
+      .orderBy("contract.created_at", "DESC")
+      .getMany();
   }
-  findAll() {
-    throw new Error("Not implemented");
+
+  findOneByUser(id: string, userId: string): Promise<ContractEntity | null> {
+    return this.repo
+      .createQueryBuilder("contract")
+      .innerJoin("contract.client", "client")
+      .where("contract.id = :id AND client.user_id = :userId", { id, userId })
+      .getOne();
   }
-  findOne(id: string) {
-    throw new Error("Not implemented");
+
+  create(data: Partial<ContractEntity>): Promise<ContractEntity> {
+    const entity = this.repo.create(data);
+    return this.repo.save(entity);
   }
-  update(id: string, dto: UpdateContractDto) {
-    throw new Error("Not implemented");
+
+  async update(
+    id: string,
+    userId: string,
+    data: Partial<ContractEntity>,
+  ): Promise<ContractEntity | null> {
+    await this.repo.update(id, data);
+    return this.findOneByUser(id, userId);
   }
-  remove(id: string) {
-    throw new Error("Not implemented");
+
+  async remove(id: string): Promise<void> {
+    await this.repo.delete(id);
   }
 }

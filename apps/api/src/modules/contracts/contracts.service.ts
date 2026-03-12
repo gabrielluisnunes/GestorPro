@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { ContractsRepository } from "./contracts.repository";
 import { CreateContractDto } from "./dto/create-contract.dto";
 import { UpdateContractDto } from "./dto/update-contract.dto";
@@ -7,23 +7,27 @@ import { UpdateContractDto } from "./dto/update-contract.dto";
 export class ContractsService {
   constructor(private readonly contractsRepository: ContractsRepository) {}
 
+  findAll(userId: string) {
+    return this.contractsRepository.findAllByUser(userId);
+  }
+
+  async findOne(id: string, userId: string) {
+    const contract = await this.contractsRepository.findOneByUser(id, userId);
+    if (!contract) throw new NotFoundException("Contrato não encontrado");
+    return contract;
+  }
+
   create(dto: CreateContractDto) {
-    return this.contractsRepository.create(dto);
+    return this.contractsRepository.create({ ...dto });
   }
 
-  findAll() {
-    return this.contractsRepository.findAll();
+  async update(id: string, dto: UpdateContractDto, userId: string) {
+    await this.findOne(id, userId);
+    return this.contractsRepository.update(id, userId, dto);
   }
 
-  findOne(id: string) {
-    return this.contractsRepository.findOne(id);
-  }
-
-  update(id: string, dto: UpdateContractDto) {
-    return this.contractsRepository.update(id, dto);
-  }
-
-  remove(id: string) {
+  async remove(id: string, userId: string) {
+    await this.findOne(id, userId);
     return this.contractsRepository.remove(id);
   }
 }

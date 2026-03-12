@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { CreateServiceDto } from "./dto/create-service.dto";
 import { UpdateServiceDto } from "./dto/update-service.dto";
 import { ServicesRepository } from "./services.repository";
@@ -7,23 +7,27 @@ import { ServicesRepository } from "./services.repository";
 export class ServicesService {
   constructor(private readonly servicesRepository: ServicesRepository) {}
 
+  findAll(userId: string) {
+    return this.servicesRepository.findAllByUser(userId);
+  }
+
+  async findOne(id: string, userId: string) {
+    const service = await this.servicesRepository.findOneByUser(id, userId);
+    if (!service) throw new NotFoundException("Serviço não encontrado");
+    return service;
+  }
+
   create(dto: CreateServiceDto) {
-    return this.servicesRepository.create(dto);
+    return this.servicesRepository.create({ ...dto });
   }
 
-  findAll() {
-    return this.servicesRepository.findAll();
+  async update(id: string, dto: UpdateServiceDto, userId: string) {
+    await this.findOne(id, userId);
+    return this.servicesRepository.update(id, userId, dto);
   }
 
-  findOne(id: string) {
-    return this.servicesRepository.findOne(id);
-  }
-
-  update(id: string, dto: UpdateServiceDto) {
-    return this.servicesRepository.update(id, dto);
-  }
-
-  remove(id: string) {
+  async remove(id: string, userId: string) {
+    await this.findOne(id, userId);
     return this.servicesRepository.remove(id);
   }
 }

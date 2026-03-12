@@ -1,19 +1,45 @@
 import { Injectable } from "@nestjs/common";
-import { CreatePaymentDto } from "./dto/create-payment.dto";
-import { UpdatePaymentDto } from "./dto/update-payment.dto";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { PaymentEntity } from "../../database/entities/payment.entity";
 
 @Injectable()
 export class PaymentsRepository {
-  create(dto: CreatePaymentDto) {
-    throw new Error("Not implemented");
+  constructor(
+    @InjectRepository(PaymentEntity)
+    private readonly repo: Repository<PaymentEntity>,
+  ) {}
+
+  findAllByUser(userId: string): Promise<PaymentEntity[]> {
+    return this.repo
+      .createQueryBuilder("payment")
+      .innerJoin("payment.contract", "contract")
+      .innerJoin("contract.client", "client")
+      .where("client.user_id = :userId", { userId })
+      .orderBy("payment.due_date", "ASC")
+      .getMany();
   }
-  findAll() {
-    throw new Error("Not implemented");
+
+  findOneByUser(id: string, userId: string): Promise<PaymentEntity | null> {
+    return this.repo
+      .createQueryBuilder("payment")
+      .innerJoin("payment.contract", "contract")
+      .innerJoin("contract.client", "client")
+      .where("payment.id = :id AND client.user_id = :userId", { id, userId })
+      .getOne();
   }
-  findOne(id: string) {
-    throw new Error("Not implemented");
+
+  create(data: Partial<PaymentEntity>): Promise<PaymentEntity> {
+    const entity = this.repo.create(data);
+    return this.repo.save(entity);
   }
-  update(id: string, dto: UpdatePaymentDto) {
-    throw new Error("Not implemented");
+
+  async update(
+    id: string,
+    userId: string,
+    data: Partial<PaymentEntity>,
+  ): Promise<PaymentEntity | null> {
+    await this.repo.update(id, data);
+    return this.findOneByUser(id, userId);
   }
 }
