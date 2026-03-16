@@ -13,7 +13,7 @@ import { ClientTimeline } from "./components/client-timeline";
 import { useClientProfile } from "./hooks/use-client-profile";
 import { useUpdateClient } from "./hooks/use-update-client";
 import type { CreateClientInput } from "./types/client.types";
-import { buildClientTimeline } from "./types/client.types";
+import { buildClientTimeline } from "./utils/client-timeline";
 
 interface Props {
   id: string;

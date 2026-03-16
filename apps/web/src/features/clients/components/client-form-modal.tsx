@@ -1,36 +1,13 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { maskCpfCnpj, maskPhone } from "@/lib/masks";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { maskCpfCnpj, maskPhone, maskCEP } from "@/lib/masks";
-import { validateCpfCnpj } from "@/lib/validators";
+import { useEffect } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { useCepLookup } from "../hooks/use-cep-lookup";
+import { clientSchema, type ClientFormData } from "../schemas/client-schema";
 import type { Client, CreateClientInput } from "../types/client.types";
-
-const schema = z.object({
-  name: z.string().min(1, "Nome obrigatorio"),
-  cpf_cnpj: z
-    .string()
-    .optional()
-    .refine(
-      (v) => !v || v.replace(/\D/g, "").length === 0 || validateCpfCnpj(v),
-      { message: "CPF ou CNPJ invalido" },
-    ),
-  phone: z.string().optional(),
-  email: z.string().email("E-mail invalido").optional().or(z.literal("")),
-  status: z.enum(["ativo", "inativo"]).default("ativo"),
-  cep: z.string().optional(),
-  street: z.string().optional(),
-  number: z.string().optional(),
-  complement: z.string().optional(),
-  neighborhood: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().max(2).optional(),
-  notes: z.string().optional(),
-});
-
-type FormData = z.infer<typeof schema>;
+import { ClientAddressFields } from "./client-address-fields";
 
 interface Props {
   open: boolean;
@@ -52,7 +29,7 @@ export function ClientFormModal({
   onClose,
   onSubmit,
 }: Props) {
-  const [cepLoading, setCepLoading] = useState(false);
+  const { loading: cepLoading, lookup: lookupCep } = useCepLookup();
 
   const {
     register,
@@ -61,7 +38,7 @@ export function ClientFormModal({
     control,
     setValue,
     formState: { errors },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<ClientFormData>({ resolver: zodResolver(clientSchema) });
 
   useEffect(() => {
     if (!open) return;
@@ -101,22 +78,12 @@ export function ClientFormModal({
   }, [open, editing, reset]);
 
   async function handleCepBlur(cep: string) {
-    const digits = cep.replace(/\D/g, "");
-    if (digits.length !== 8) return;
-    setCepLoading(true);
-    try {
-      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
-      const data = await res.json();
-      if (!data.erro) {
-        setValue("street", data.logradouro ?? "");
-        setValue("neighborhood", data.bairro ?? "");
-        setValue("city", data.localidade ?? "");
-        setValue("state", data.uf ?? "");
-      }
-    } catch {
-      // user fills manually
-    } finally {
-      setCepLoading(false);
+    const result = await lookupCep(cep);
+    if (result) {
+      setValue("street", result.street);
+      setValue("neighborhood", result.neighborhood);
+      setValue("city", result.city);
+      setValue("state", result.state);
     }
   }
 
@@ -149,15 +116,25 @@ export function ClientFormModal({
               Dados Basicos
             </p>
             <div>
-              <label className="text-sm font-medium text-gray-700">Nome completo *</label>
-              <input {...register("name")} className={inputCls} placeholder="Ex: Joao da Silva" />
+              <label className="text-sm font-medium text-gray-700">
+                Nome completo *
+              </label>
+              <input
+                {...register("name")}
+                className={inputCls}
+                placeholder="Ex: Joao da Silva"
+              />
               {errors.name && (
-                <p className="text-xs text-red-500 mt-1">{errors.name.message}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.name.message}
+                </p>
               )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium text-gray-700">CPF / CNPJ</label>
+                <label className="text-sm font-medium text-gray-700">
+                  CPF / CNPJ
+                </label>
                 <Controller
                   name="cpf_cnpj"
                   control={control}
@@ -165,18 +142,24 @@ export function ClientFormModal({
                     <input
                       {...field}
                       value={field.value ? maskCpfCnpj(field.value) : ""}
-                      onChange={(e) => field.onChange(maskCpfCnpj(e.target.value))}
+                      onChange={(e) =>
+                        field.onChange(maskCpfCnpj(e.target.value))
+                      }
                       className={inputCls}
                       placeholder="000.000.000-00"
                     />
                   )}
                 />
                 {errors.cpf_cnpj && (
-                  <p className="text-xs text-red-500 mt-1">{errors.cpf_cnpj.message}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.cpf_cnpj.message}
+                  </p>
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Telefone</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Telefone
+                </label>
                 <Controller
                   name="phone"
                   control={control}
@@ -184,7 +167,9 @@ export function ClientFormModal({
                     <input
                       {...field}
                       value={field.value ? maskPhone(field.value) : ""}
-                      onChange={(e) => field.onChange(maskPhone(e.target.value))}
+                      onChange={(e) =>
+                        field.onChange(maskPhone(e.target.value))
+                      }
                       className={inputCls}
                       placeholder="(11) 99999-9999"
                     />
@@ -194,14 +179,25 @@ export function ClientFormModal({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium text-gray-700">E-mail</label>
-                <input {...register("email")} type="email" className={inputCls} placeholder="email@exemplo.com" />
+                <label className="text-sm font-medium text-gray-700">
+                  E-mail
+                </label>
+                <input
+                  {...register("email")}
+                  type="email"
+                  className={inputCls}
+                  placeholder="email@exemplo.com"
+                />
                 {errors.email && (
-                  <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.email.message}
+                  </p>
                 )}
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Status</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Status
+                </label>
                 <select {...register("status")} className={inputCls}>
                   <option value="ativo">Ativo</option>
                   <option value="inativo">Inativo</option>
@@ -210,63 +206,17 @@ export function ClientFormModal({
             </div>
           </section>
 
-          <section className="space-y-3">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-              Endereco
-            </p>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  CEP{cepLoading && <span className="text-xs text-gray-400 font-normal ml-1">buscando...</span>}
-                </label>
-                <Controller
-                  name="cep"
-                  control={control}
-                  render={({ field }) => (
-                    <input
-                      {...field}
-                      value={field.value ? maskCEP(field.value) : ""}
-                      onChange={(e) => field.onChange(maskCEP(e.target.value))}
-                      onBlur={(e) => { field.onBlur(); handleCepBlur(e.target.value); }}
-                      className={inputCls}
-                      placeholder="00000-000"
-                    />
-                  )}
-                />
-              </div>
-              <div className="col-span-2">
-                <label className="text-sm font-medium text-gray-700">Logradouro</label>
-                <input {...register("street")} className={inputCls} placeholder="Rua, Av..." />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="text-sm font-medium text-gray-700">Numero</label>
-                <input {...register("number")} className={inputCls} placeholder="123" />
-              </div>
-              <div className="col-span-2">
-                <label className="text-sm font-medium text-gray-700">Complemento</label>
-                <input {...register("complement")} className={inputCls} placeholder="Apto, Sala..." />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2">
-                <label className="text-sm font-medium text-gray-700">Bairro</label>
-                <input {...register("neighborhood")} className={inputCls} />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">UF</label>
-                <input {...register("state")} className={inputCls} maxLength={2} placeholder="SP" />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-700">Cidade</label>
-              <input {...register("city")} className={inputCls} />
-            </div>
-          </section>
+          <ClientAddressFields
+            register={register}
+            control={control}
+            cepLoading={cepLoading}
+            onCepBlur={handleCepBlur}
+          />
 
           <section className="space-y-3">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Observacoes</p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              Observacoes
+            </p>
             <textarea
               {...register("notes")}
               rows={2}
@@ -276,10 +226,18 @@ export function ClientFormModal({
           </section>
 
           <div className="flex justify-end gap-3 pt-1 border-t border-gray-100">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
               Cancelar
             </button>
-            <button type="submit" disabled={loading} className="px-5 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg disabled:opacity-60 transition-colors">
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-5 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg disabled:opacity-60 transition-colors"
+            >
               {loading ? "Salvando..." : "Salvar Cliente"}
             </button>
           </div>

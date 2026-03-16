@@ -21,3 +21,7 @@ export async function updatePayment(
 ): Promise<Payment> {
   return apiClient.patch(`/payments/${id}`, data).then((res) => res.data);
 }
+
+export async function deletePayment(id: string): Promise<void> {
+  return apiClient.delete(`/payments/${id}`).then((res) => res.data);
+}

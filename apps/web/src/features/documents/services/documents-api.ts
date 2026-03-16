@@ -18,3 +18,10 @@ export async function createDocument(
 export async function deleteDocument(id: string): Promise<void> {
   return apiClient.delete(`/documents/${id}`).then((res) => res.data);
 }
+
+export async function updateDocument(
+  id: string,
+  data: Partial<CreateDocumentInput>,
+): Promise<Document> {
+  return apiClient.patch(`/documents/${id}`, data).then((res) => res.data);
+}
