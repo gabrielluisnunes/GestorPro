@@ -13,12 +13,30 @@ export class ClientsRepository {
   findAllByUser(userId: string): Promise<ClientEntity[]> {
     return this.repo.find({
       where: { user_id: userId },
+      relations: ["services", "contracts"],
       order: { name: "ASC" },
     });
   }
 
   findOneByUser(id: string, userId: string): Promise<ClientEntity | null> {
-    return this.repo.findOne({ where: { id, user_id: userId } });
+    return this.repo.findOne({
+      where: { id, user_id: userId },
+      relations: [
+        "services",
+        "contracts",
+        "contracts.payments",
+        "documents",
+        "events",
+      ],
+    });
+  }
+
+  findByCpfCnpj(cpfCnpj: string, userId: string): Promise<ClientEntity | null> {
+    return this.repo.findOne({ where: { cpf_cnpj: cpfCnpj, user_id: userId } });
+  }
+
+  findByEmail(email: string, userId: string): Promise<ClientEntity | null> {
+    return this.repo.findOne({ where: { email, user_id: userId } });
   }
 
   create(data: Partial<ClientEntity>): Promise<ClientEntity> {

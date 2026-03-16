@@ -1,7 +1,14 @@
-import { IsEmail, IsOptional, IsString } from "class-validator";
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from "class-validator";
 
 export class CreateClientDto {
   @IsString()
+  @MaxLength(150)
   name: string;
 
   @IsOptional()
@@ -17,8 +24,37 @@ export class CreateClientDto {
   email?: string;
 
   @IsOptional()
+  @IsEnum(["ativo", "inativo"])
+  status?: "ativo" | "inativo";
+
+  @IsOptional()
   @IsString()
-  address?: string;
+  cep?: string;
+
+  @IsOptional()
+  @IsString()
+  street?: string;
+
+  @IsOptional()
+  @IsString()
+  number?: string;
+
+  @IsOptional()
+  @IsString()
+  complement?: string;
+
+  @IsOptional()
+  @IsString()
+  neighborhood?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2)
+  state?: string;
 
   @IsOptional()
   @IsString()

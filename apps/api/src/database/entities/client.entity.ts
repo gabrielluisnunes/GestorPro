@@ -26,14 +26,35 @@ export class ClientEntity {
   @Column({ nullable: true, length: 20 })
   cpf_cnpj: string;
 
-  @Column({ nullable: true, length: 30 })
+  @Column({ nullable: true, length: 20 })
   phone: string;
 
   @Column({ nullable: true, length: 200 })
   email: string;
 
-  @Column({ nullable: true, type: "text" })
-  address: string;
+  @Column({ type: "enum", enum: ["ativo", "inativo"], default: "ativo" })
+  status: "ativo" | "inativo";
+
+  @Column({ nullable: true, length: 9 })
+  cep: string;
+
+  @Column({ nullable: true, length: 200 })
+  street: string;
+
+  @Column({ nullable: true, length: 20 })
+  number: string;
+
+  @Column({ nullable: true, length: 100 })
+  complement: string;
+
+  @Column({ nullable: true, length: 100 })
+  neighborhood: string;
+
+  @Column({ nullable: true, length: 100 })
+  city: string;
+
+  @Column({ nullable: true, length: 2 })
+  state: string;
 
   @Column({ nullable: true, type: "text" })
   notes: string;
