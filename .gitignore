@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Uploads (arquivos enviados pela API)
+uploads/
+
 # Build outputs
 dist/
 .next/

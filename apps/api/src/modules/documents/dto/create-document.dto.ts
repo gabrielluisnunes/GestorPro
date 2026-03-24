@@ -6,6 +6,10 @@ export class CreateDocumentDto {
 
   @IsOptional()
   @IsString()
+  filename?: string;
+
+  @IsOptional()
+  @IsString()
   client_id?: string;
 
   @IsOptional()

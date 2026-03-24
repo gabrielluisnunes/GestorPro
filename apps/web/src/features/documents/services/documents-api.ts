@@ -15,6 +15,12 @@ export async function createDocument(
   return apiClient.post("/documents", data).then((res) => res.data);
 }
 
+export async function uploadDocumentMultipart(
+  formData: FormData,
+): Promise<Document> {
+  return apiClient.post("/documents/upload", formData).then((res) => res.data);
+}
+
 export async function deleteDocument(id: string): Promise<void> {
   return apiClient.delete(`/documents/${id}`).then((res) => res.data);
 }

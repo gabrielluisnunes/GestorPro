@@ -7,19 +7,19 @@ import { DocumentList } from "./components/document-list";
 import { DocumentUploadModal } from "./components/document-upload-modal";
 import { useDeleteDocument } from "./hooks/use-delete-document";
 import { useDocuments } from "./hooks/use-documents";
-import { useUploadDocument } from "./hooks/use-upload-document";
-import type { CreateDocumentInput } from "./types/document.types";
+import { useUploadDocumentMultipart } from "./hooks/use-upload-document";
 
 export default function DocumentsPage() {
   const [modalOpen, setModalOpen] = useState(false);
+  const [dropzoneClientId, setDropzoneClientId] = useState("");
 
   const { data: documents = [], isLoading } = useDocuments();
   const { data: clients = [] } = useClients();
-  const uploadDocument = useUploadDocument();
+  const uploadMultipart = useUploadDocumentMultipart();
   const deleteDocument = useDeleteDocument();
 
-  function handleUpload(data: CreateDocumentInput) {
-    uploadDocument.mutate(data, { onSuccess: () => setModalOpen(false) });
+  function handleModalUpload(formData: FormData) {
+    uploadMultipart.mutate(formData, { onSuccess: () => setModalOpen(false) });
   }
 
   function handleDelete(id: string) {
@@ -27,11 +27,12 @@ export default function DocumentsPage() {
   }
 
   function handleQuickUpload(files: FileList) {
+    if (!dropzoneClientId) return;
     for (const file of Array.from(files)) {
-      uploadDocument.mutate({
-        file_url: URL.createObjectURL(file),
-        filename: file.name,
-      });
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("client_id", dropzoneClientId);
+      uploadMultipart.mutate(fd);
     }
   }
 
@@ -111,14 +112,20 @@ export default function DocumentsPage() {
         )}
       </div>
 
-      <DocumentDropzone onDrop={handleQuickUpload} />
+      <DocumentDropzone
+        clients={clients}
+        clientId={dropzoneClientId}
+        onClientIdChange={setDropzoneClientId}
+        onFilesSelected={handleQuickUpload}
+        disabled={uploadMultipart.isPending}
+      />
 
       <DocumentUploadModal
         open={modalOpen}
         clients={clients}
-        loading={uploadDocument.isPending}
+        loading={uploadMultipart.isPending}
         onClose={() => setModalOpen(false)}
-        onSubmit={handleUpload}
+        onSubmit={handleModalUpload}
       />
     </div>
   );

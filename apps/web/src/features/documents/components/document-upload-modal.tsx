@@ -2,25 +2,25 @@
 
 import type { Client } from "@/features/clients/types/client.types";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import type { CreateDocumentInput } from "../types/document.types";
 
 const schema = z.object({
-  file_url: z.string().url("URL inválida").min(1, "URL obrigatória"),
-  filename: z.string().optional(),
-  client_id: z.string().optional(),
+  client_id: z
+    .string()
+    .min(1, "Selecione um cliente")
+    .uuid("Selecione um cliente"),
 });
 
-type FormData = z.infer<typeof schema>;
+type UploadModalFields = z.infer<typeof schema>;
 
 interface Props {
   open: boolean;
   clients: Client[];
   loading?: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateDocumentInput) => void;
+  onSubmit: (formData: FormData) => void;
 }
 
 const inputCls =
@@ -33,18 +33,40 @@ export function DocumentUploadModal({
   onClose,
   onSubmit,
 }: Props) {
+  const [file, setFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<UploadModalFields>({
+    resolver: zodResolver(schema),
+    defaultValues: { client_id: "" },
+  });
 
   useEffect(() => {
-    if (open) reset({ file_url: "", filename: "", client_id: "" });
+    if (open) {
+      reset({ client_id: "" });
+      setFile(null);
+      setFileError(null);
+    }
   }, [open, reset]);
 
   if (!open) return null;
+
+  function submit(data: UploadModalFields) {
+    if (!file) {
+      setFileError("Selecione um arquivo");
+      return;
+    }
+    setFileError(null);
+    const multipart = new FormData();
+    multipart.append("file", file);
+    multipart.append("client_id", data.client_id);
+    onSubmit(multipart);
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -53,46 +75,42 @@ export function DocumentUploadModal({
           Enviar Documento
         </h2>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(submit)} className="space-y-4">
           <div>
             <label className="text-sm font-medium text-gray-700">
-              URL do arquivo *
+              Arquivo *
             </label>
             <input
-              {...register("file_url")}
-              placeholder="https://..."
+              type="file"
               className={inputCls}
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                setFile(f);
+                if (f) setFileError(null);
+              }}
             />
-            {errors.file_url && (
-              <p className="text-xs text-red-500 mt-1">
-                {errors.file_url.message}
-              </p>
+            {fileError && (
+              <p className="text-xs text-red-500 mt-1">{fileError}</p>
             )}
           </div>
 
           <div>
             <label className="text-sm font-medium text-gray-700">
-              Nome do arquivo
-            </label>
-            <input
-              {...register("filename")}
-              placeholder="contrato.pdf"
-              className={inputCls}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-gray-700">
-              Cliente (opcional)
+              Cliente *
             </label>
             <select {...register("client_id")} className={inputCls}>
-              <option value="">Nenhum</option>
+              <option value="">Selecione</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
                 </option>
               ))}
             </select>
+            {errors.client_id && (
+              <p className="text-xs text-red-500 mt-1">
+                {errors.client_id.message}
+              </p>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
