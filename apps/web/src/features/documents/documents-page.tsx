@@ -26,6 +26,15 @@ export default function DocumentsPage() {
     if (confirm("Deseja excluir este documento?")) deleteDocument.mutate(id);
   }
 
+  function handleQuickUpload(files: FileList) {
+    for (const file of Array.from(files)) {
+      uploadDocument.mutate({
+        file_url: URL.createObjectURL(file),
+        filename: file.name,
+      });
+    }
+  }
+
   return (
     <div>
       {/* Header e barra de busca/filtros */}
@@ -102,7 +111,7 @@ export default function DocumentsPage() {
         )}
       </div>
 
-      <DocumentDropzone />
+      <DocumentDropzone onDrop={handleQuickUpload} />
 
       <DocumentUploadModal
         open={modalOpen}
