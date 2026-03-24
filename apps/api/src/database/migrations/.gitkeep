@@ -1,3 +1,0 @@
-// Migrations are generated via:
-// npm run migration:generate -- src/database/migrations/InitialSchema
-// npm run migration:run

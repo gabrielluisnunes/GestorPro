@@ -18,10 +18,10 @@ import { UsersModule } from "./modules/users/users.module";
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        type: "mariadb",
+        type: "postgres",
         host: config.get<string>("DB_HOST", "localhost"),
-        port: config.get<number>("DB_PORT", 3306),
-        username: config.get<string>("DB_USERNAME", "root"),
+        port: config.get<number>("DB_PORT", 5432),
+        username: config.get<string>("DB_USERNAME", "gabrielnunes"),
         password: config.get<string>("DB_PASSWORD", ""),
         database: config.get<string>("DB_DATABASE", "gestorpro"),
         entities: [__dirname + "/database/entities/*.entity{.ts,.js}"],
