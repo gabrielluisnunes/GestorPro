@@ -1,18 +1,17 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import {
-  LayoutDashboard,
-  Users,
   Briefcase,
-  FileText,
+  Calendar,
   ClipboardList,
   CreditCard,
-  Calendar,
-  MessageSquare,
+  FileText,
+  LayoutDashboard,
   Settings,
+  Users,
 } from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -22,7 +21,6 @@ const navItems = [
   { href: "/contratos", label: "Contratos", icon: ClipboardList },
   { href: "/pagamentos", label: "Pagamentos", icon: CreditCard },
   { href: "/agenda", label: "Agenda", icon: Calendar },
-  { href: "/mensagens", label: "Mensagens", icon: MessageSquare },
 ];
 
 interface SidebarProps {
@@ -44,12 +42,22 @@ export function Sidebar({ userName = "Usuario" }: SidebarProps) {
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center shrink-0">
             <svg width="16" height="16" viewBox="0 0 22 22" fill="none">
-              <path d="M4 11L9 16L18 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path
+                d="M4 11L9 16L18 7"
+                stroke="white"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
           <div>
-            <p className="text-xs font-bold text-gray-900 leading-tight">GestorPro</p>
-            <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400">ADMINISTRACAO</p>
+            <p className="text-xs font-bold text-gray-900 leading-tight">
+              GestorPro
+            </p>
+            <p className="text-[10px] font-medium uppercase tracking-widest text-gray-400">
+              ADMINISTRACAO
+            </p>
           </div>
         </div>
       </div>
@@ -93,7 +101,9 @@ export function Sidebar({ userName = "Usuario" }: SidebarProps) {
           {userName.charAt(0).toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-gray-900 truncate">{userName}</p>
+          <p className="text-xs font-semibold text-gray-900 truncate">
+            {userName}
+          </p>
           <button
             onClick={handleLogout}
             className="text-[11px] text-gray-400 hover:text-red-500 transition-colors"

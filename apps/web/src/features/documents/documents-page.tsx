@@ -1,22 +1,54 @@
 "use client";
 
 import { useClients } from "@/features/clients/hooks/use-clients";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DocumentDropzone } from "./components/document-dropzone";
 import { DocumentList } from "./components/document-list";
 import { DocumentUploadModal } from "./components/document-upload-modal";
 import { useDeleteDocument } from "./hooks/use-delete-document";
 import { useDocuments } from "./hooks/use-documents";
 import { useUploadDocumentMultipart } from "./hooks/use-upload-document";
+import type { Document as DocumentRecord } from "./types/document.types";
+
+type DocumentCategory = "all" | "pdf" | "docs" | "images";
+
+function matchesCategory(doc: DocumentRecord, cat: DocumentCategory): boolean {
+  const name = (doc.filename ?? doc.file_url ?? "").toLowerCase();
+  if (cat === "all") return true;
+  if (cat === "pdf") return name.endsWith(".pdf");
+  if (cat === "images")
+    return /\.(png|jpe?g|gif|webp)$/i.test(name);
+  return /\.(docx?|xlsx?|pptx?|odt)$/i.test(name);
+}
+
+function filterChipClass(active: boolean) {
+  return active
+    ? "px-3 py-1.5 text-xs font-medium rounded-lg border border-primary-100 bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
+    : "px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-100 bg-white text-gray-600 hover:bg-gray-50 transition-colors";
+}
 
 export default function DocumentsPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [dropzoneClientId, setDropzoneClientId] = useState("");
+  const [category, setCategory] = useState<DocumentCategory>("all");
+  const [search, setSearch] = useState("");
 
   const { data: documents = [], isLoading } = useDocuments();
   const { data: clients = [] } = useClients();
   const uploadMultipart = useUploadDocumentMultipart();
   const deleteDocument = useDeleteDocument();
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return documents.filter((doc) => {
+      if (!matchesCategory(doc, category)) return false;
+      if (!q) return true;
+      const name = (doc.filename ?? doc.file_url ?? "").toLowerCase();
+      const clientName =
+        clients.find((c) => c.id === doc.client_id)?.name?.toLowerCase() ?? "";
+      return name.includes(q) || clientName.includes(q);
+    });
+  }, [documents, category, search, clients]);
 
   function handleModalUpload(formData: FormData) {
     uploadMultipart.mutate(formData, { onSuccess: () => setModalOpen(false) });
@@ -53,20 +85,38 @@ export default function DocumentsPage() {
         <div className="flex flex-col md:flex-row md:items-center gap-3">
           <input
             type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nome, cliente ou formato..."
             className="w-full md:max-w-xs px-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary-400 focus:bg-white transition-colors placeholder:text-gray-400"
           />
           <div className="flex gap-2 flex-wrap">
-            <button className="px-3 py-1.5 text-xs font-medium rounded-lg border border-primary-100 bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors">
+            <button
+              type="button"
+              onClick={() => setCategory("all")}
+              className={filterChipClass(category === "all")}
+            >
               Todos os Arquivos
             </button>
-            <button className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-100 bg-white text-gray-600 hover:bg-gray-50 transition-colors">
+            <button
+              type="button"
+              onClick={() => setCategory("pdf")}
+              className={filterChipClass(category === "pdf")}
+            >
               PDFs
             </button>
-            <button className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-100 bg-white text-gray-600 hover:bg-gray-50 transition-colors">
+            <button
+              type="button"
+              onClick={() => setCategory("docs")}
+              className={filterChipClass(category === "docs")}
+            >
               Documentos
             </button>
-            <button className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-100 bg-white text-gray-600 hover:bg-gray-50 transition-colors">
+            <button
+              type="button"
+              onClick={() => setCategory("images")}
+              className={filterChipClass(category === "images")}
+            >
               Imagens
             </button>
           </div>
@@ -108,7 +158,7 @@ export default function DocumentsPage() {
         {isLoading ? (
           <div className="text-center py-16 text-gray-400">Carregando...</div>
         ) : (
-          <DocumentList documents={documents} onDelete={handleDelete} />
+          <DocumentList documents={filtered} onDelete={handleDelete} />
         )}
       </div>
 

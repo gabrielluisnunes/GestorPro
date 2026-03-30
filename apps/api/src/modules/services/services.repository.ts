@@ -1,7 +1,10 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { ServiceEntity } from "../../database/entities/service.entity";
+import {
+  ServiceEntity,
+  ServiceStatus,
+} from "../../database/entities/service.entity";
 
 @Injectable()
 export class ServicesRepository {
@@ -43,5 +46,21 @@ export class ServicesRepository {
 
   async remove(id: string): Promise<void> {
     await this.repo.delete(id);
+  }
+
+  /**
+   * Marca como finalizado serviços com data de término definida e já vencida
+   * (comparado à data atual do PostgreSQL). Idempotente.
+   */
+  async markFinishedWhereEndDatePassed(): Promise<number> {
+    const result = await this.repo
+      .createQueryBuilder()
+      .update(ServiceEntity)
+      .set({ status: ServiceStatus.FINISHED })
+      .where("end_date IS NOT NULL")
+      .andWhere("end_date <= CURRENT_DATE")
+      .andWhere("status != :finished", { finished: ServiceStatus.FINISHED })
+      .execute();
+    return result.affected ?? 0;
   }
 }

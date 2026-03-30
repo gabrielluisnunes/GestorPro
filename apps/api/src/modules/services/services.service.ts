@@ -30,4 +30,9 @@ export class ServicesService {
     await this.findOne(id, userId);
     return this.servicesRepository.remove(id);
   }
+
+  /** Usado pelo agendador: finaliza serviços cuja data de término já passou. */
+  finalizeExpiredServices(): Promise<number> {
+    return this.servicesRepository.markFinishedWhereEndDatePassed();
+  }
 }
